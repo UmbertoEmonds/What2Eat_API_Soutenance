@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace What2EatAPI
 {
@@ -27,6 +28,7 @@ namespace What2EatAPI
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.AddDbContext<what2eatContext>(options => options.UseMySQL(Configuration.GetConnectionString("UserContextConnection")));
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
