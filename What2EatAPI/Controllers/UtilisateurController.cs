@@ -144,6 +144,8 @@ namespace What2EatAPI.Controllers
             return NotFound();
         }
 
+        //api/Utilisateur/ingredients
+        [HttpGet("frigo")]
         public async Task<List<IngredientDTO>> GetIngredientsFromUserAsync(int userId)
         {
             var utilisateur = await _context.Utilisateurs.FindAsync(userId);
