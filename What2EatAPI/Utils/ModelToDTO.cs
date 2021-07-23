@@ -22,6 +22,7 @@ namespace What2EatAPI.Utils
                 Naissance = utilisateur.Naissance,
                 Mail = utilisateur.Mail,
                 ImageUrl = _context.Images.FindAsync(utilisateur.ImageIdImage).Result.ImagePath,
+                Token = utilisateur.Token,
                 Ingredients = userIngredients
             };
 

@@ -370,6 +370,10 @@ namespace What2EatAPI
                     .HasMaxLength(255)
                     .HasColumnName("prenom");
 
+                entity.Property(e => e.Token)
+                    .HasMaxLength(255)
+                    .HasColumnName("token");
+
                 entity.HasOne(d => d.ImageIdImageNavigation)
                     .WithMany(p => p.Utilisateurs)
                     .HasForeignKey(d => d.ImageIdImage)

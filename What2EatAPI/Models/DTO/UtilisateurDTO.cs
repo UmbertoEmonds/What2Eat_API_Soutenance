@@ -11,6 +11,7 @@ namespace What2EatAPI.Models.DTO
         public DateTime? Naissance { get; set; }
         public string Mail { get; set; }
         public string ImageUrl { get; set; }
+        public string Token { get; set; }
         public List<IngredientDTO> Ingredients { get; set; }
     }
 }

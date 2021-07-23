@@ -20,6 +20,7 @@ namespace What2EatAPI
         public DateTime? Naissance { get; set; }
         public string Mail { get; set; }
         public string MotDePasse { get; set; }
+        public string Token { get; set; }
         public int? ImageIdImage { get; set; }
 
         public virtual Image ImageIdImageNavigation { get; set; }
