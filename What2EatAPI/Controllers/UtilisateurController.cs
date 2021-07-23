@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using What2EatAPI;
+using What2EatAPI.Models.DTO;
+using What2EatAPI.Utils;
 
 namespace What2EatAPI.Controllers
 {
@@ -20,25 +22,32 @@ namespace What2EatAPI.Controllers
             _context = context;
         }
 
-        // GET: api/Utilisateur
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Utilisateur>>> GetUtilisateurs()
-        {
-            return await _context.Utilisateurs.ToListAsync();
-        }
-
         // GET: api/Utilisateur/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Utilisateur>> GetUtilisateur(int id)
+        public async Task<ActionResult<UtilisateurDTO>> GetUtilisateur(int id)
         {
+            var DTOUtils = new ModelToDTO(_context);
+
             var utilisateur = await _context.Utilisateurs.FindAsync(id);
+            var frigos = await _context.Frigos.ToListAsync();
+
+            List<IngredientDTO> ingredients = new List<IngredientDTO>();
+
+            foreach (var frigo in frigos)
+            {
+                if (id.Equals(frigo.UtilisateurIdUtilisateur))
+                {
+                    var ingredient = _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
+                    ingredients.Add(DTOUtils.IngredientToDTO(ingredient.Result));
+                }
+            }
 
             if (utilisateur == null)
             {
                 return NotFound();
             }
 
-            return utilisateur;
+            return DTOUtils.UtilisateurToDTO(utilisateur, ingredients);
         }
 
         // PUT: api/Utilisateur/5
@@ -103,5 +112,6 @@ namespace What2EatAPI.Controllers
         {
             return _context.Utilisateurs.Any(e => e.IdUtilisateur == id);
         }
+
     }
 }

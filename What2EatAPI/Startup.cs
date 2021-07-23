@@ -30,6 +30,7 @@ namespace What2EatAPI
 
             services.AddDbContext<what2eatContext>(options => options.UseMySQL(Configuration.GetConnectionString("UserContextConnection")));
             services.AddControllers();
+            //.AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "What2EatAPI", Version = "v1" });
