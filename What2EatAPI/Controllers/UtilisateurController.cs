@@ -158,6 +158,8 @@ namespace What2EatAPI.Controllers
             return NotFound();
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)] // permet d'ignorer le controller dans le swagger
+        [HttpGet("ingredients")]
         public async Task<List<IngredientDTO>> GetIngredients(int userId)
         {
             var frigos = await _context.Frigos.ToListAsync();
