@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using What2EatAPI;
 using What2EatAPI.Models.DTO;
 using What2EatAPI.Utils;
 
@@ -17,8 +15,8 @@ namespace What2EatAPI.Controllers
     public class UtilisateurController : ControllerBase
     {
         private readonly what2eatContext _context;
-        private IConfiguration _config;
-        private ModelToDTO DTOUtils;
+        private readonly IConfiguration _config;
+        private readonly ModelToDTO DTOUtils;
 
         public UtilisateurController(what2eatContext context, IConfiguration config)
         {
@@ -27,6 +25,7 @@ namespace What2EatAPI.Controllers
             DTOUtils = new ModelToDTO(_context);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         // GET: api/User
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Utilisateur>>> GetUsers()
@@ -44,14 +43,14 @@ namespace What2EatAPI.Controllers
             {
                 var utilisateur = await _context.Utilisateurs.FindAsync(id);
 
-                List<IngredientDTO> ingredients = GetIngredients(id).Result;
+                List<IngredientDTO> ingredients = await GetIngredients(id);
 
                 if (utilisateur == null)
                 {
                     return NotFound();
                 }
 
-                return DTOUtils.UtilisateurToDTO(utilisateur, ingredients);
+                return await DTOUtils.UtilisateurToDTO(utilisateur, ingredients);
             }
 
             return Unauthorized();
@@ -150,16 +149,15 @@ namespace What2EatAPI.Controllers
                     _context.Entry(user).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
 
-                    List<IngredientDTO> ingredients = GetIngredients(user.IdUtilisateur).Result;
+                    List<IngredientDTO> ingredients = await GetIngredients(user.IdUtilisateur);
 
-                    return DTOUtils.UtilisateurToDTO(user, ingredients);
+                    return await DTOUtils.UtilisateurToDTO(user, ingredients);
                 }
             }
             return NotFound();
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)] // permet d'ignorer le controller dans le swagger
-        [HttpGet("ingredients")]
+        [HttpGet("ingredientsUser")]
         public async Task<List<IngredientDTO>> GetIngredients(int userId)
         {
             var frigos = await _context.Frigos.ToListAsync();
@@ -170,14 +168,14 @@ namespace What2EatAPI.Controllers
             {
                 if (userId.Equals(frigo.UtilisateurIdUtilisateur))
                 {
-                    var ingredient = _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
-                    ingredients.Add(DTOUtils.IngredientToDTO(ingredient.Result));
+                    var ingredient = await _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
+                    var ingredientDTO = await DTOUtils.IngredientToDTOAsync(ingredient);
+                    ingredients.Add(ingredientDTO);
                 }
             }
             return ingredients;
         }
          
-
         //api/Utilisateur/ingredients
         [HttpGet("frigo")]
         public async Task<ActionResult<List<IngredientDTO>>> GetIngredientsFromUserAsync(int userId, string token)

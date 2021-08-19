@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using What2EatAPI.Models.DTO;
 
 namespace What2EatAPI.Utils
@@ -13,28 +13,38 @@ namespace What2EatAPI.Utils
             _context = context;
         }
 
-        public UtilisateurDTO UtilisateurToDTO(Utilisateur utilisateur, List<IngredientDTO> userIngredients) =>
-            new UtilisateurDTO
+        public async Task<UtilisateurDTO> UtilisateurToDTO(Utilisateur utilisateur, List<IngredientDTO> userIngredients)
+        {
+            var image = await _context.Images.FindAsync(utilisateur.ImageIdImage);
+
+            return new UtilisateurDTO
             {
                 IdUtilisateur = utilisateur.IdUtilisateur,
                 Nom = utilisateur.Nom,
                 Prenom = utilisateur.Prenom,
                 Naissance = utilisateur.Naissance,
                 Mail = utilisateur.Mail,
-                ImageUrl = _context.Images.FindAsync(utilisateur.ImageIdImage).Result.ImagePath,
+                ImageUrl = image.ImagePath,
                 Token = utilisateur.Token,
                 Ingredients = userIngredients
             };
+        }   
 
-        public IngredientDTO IngredientToDTO(Ingredient ingredient) =>
-            new IngredientDTO
+        public async Task<IngredientDTO> IngredientToDTOAsync(Ingredient ingredient)
+        {
+
+            var image = await _context.Images.FindAsync(ingredient.ImageIdImage);
+            var categorie = await _context.Categories.FindAsync(ingredient.CategorieIdCategorie);
+
+            return new IngredientDTO
             {
                 Nom = ingredient.Nom,
                 CodeBarre = ingredient.CodeBarre,
                 Quantite = ingredient.Quantite,
                 Unite = ingredient.Unite,
-                ImageUrl = _context.Images.FindAsync(ingredient.ImageIdImage).Result.ImagePath,
-                Categorie = _context.Categories.FindAsync(ingredient.CategorieIdCategorie).Result.IdCategorie
+                ImageUrl = image.ImagePath,
+                Categorie = categorie.IdCategorie
             };
+        }
     }
 }
