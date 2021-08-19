@@ -44,7 +44,7 @@ namespace What2EatAPI.Controllers
             {
                 var utilisateur = await _context.Utilisateurs.FindAsync(id);
 
-                List<IngredientDTO> ingredients = GetIngredientsFromUserAsync(id, token).Result.Value;
+                List<IngredientDTO> ingredients = GetIngredients(id).Result;
 
                 if (utilisateur == null)
                 {
@@ -150,13 +150,31 @@ namespace What2EatAPI.Controllers
                     _context.Entry(user).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
 
-                    List<IngredientDTO> ingredients = GetIngredientsFromUserAsync(user.IdUtilisateur, user.Token).Result.Value;
+                    List<IngredientDTO> ingredients = GetIngredients(user.IdUtilisateur).Result;
 
                     return DTOUtils.UtilisateurToDTO(user, ingredients);
                 }
             }
             return NotFound();
         }
+
+        public async Task<List<IngredientDTO>> GetIngredients(int userId)
+        {
+            var frigos = await _context.Frigos.ToListAsync();
+
+            List<IngredientDTO> ingredients = new List<IngredientDTO>();
+
+            foreach (var frigo in frigos)
+            {
+                if (userId.Equals(frigo.UtilisateurIdUtilisateur))
+                {
+                    var ingredient = _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
+                    ingredients.Add(DTOUtils.IngredientToDTO(ingredient.Result));
+                }
+            }
+            return ingredients;
+        }
+         
 
         //api/Utilisateur/ingredients
         [HttpGet("frigo")]
@@ -166,18 +184,8 @@ namespace What2EatAPI.Controllers
 
             if (isValidToken)
             {
-                var frigos = await _context.Frigos.ToListAsync();
+                List<IngredientDTO> ingredients = await GetIngredients(userId);
 
-                List<IngredientDTO> ingredients = new List<IngredientDTO>();
-
-                foreach (var frigo in frigos)
-                {
-                    if (userId.Equals(frigo.UtilisateurIdUtilisateur))
-                    {
-                        var ingredient = _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
-                        ingredients.Add(DTOUtils.IngredientToDTO(ingredient.Result));
-                    }
-                }
                 return Ok(ingredients);
 
             }
