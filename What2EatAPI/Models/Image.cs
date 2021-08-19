@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 #nullable disable
 
@@ -14,6 +16,8 @@ namespace What2EatAPI
             Utilisateurs = new HashSet<Utilisateur>();
         }
 
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int IdImage { get; set; }
         public string Image64 { get; set; }
         public string ImagePath { get; set; }

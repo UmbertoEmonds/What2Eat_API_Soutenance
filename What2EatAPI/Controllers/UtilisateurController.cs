@@ -27,51 +27,73 @@ namespace What2EatAPI.Controllers
             DTOUtils = new ModelToDTO(_context);
         }
 
+        // GET: api/User
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Utilisateur>>> GetUsers()
+        {
+            return await _context.Utilisateurs.ToListAsync();
+        }
+
         // GET: api/Utilisateur/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<UtilisateurDTO>> GetUtilisateur(int id)
+        public async Task<ActionResult<UtilisateurDTO>> GetUtilisateur(int id, string token)
         {
-            var utilisateur = await _context.Utilisateurs.FindAsync(id);
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, id);
 
-            List<IngredientDTO> ingredients = GetIngredientsFromUserAsync(id).Result;
-
-            if (utilisateur == null)
+            if (isValidToken)
             {
-                return NotFound();
+                var utilisateur = await _context.Utilisateurs.FindAsync(id);
+
+                List<IngredientDTO> ingredients = GetIngredientsFromUserAsync(id, token).Result.Value;
+
+                if (utilisateur == null)
+                {
+                    return NotFound();
+                }
+
+                return DTOUtils.UtilisateurToDTO(utilisateur, ingredients);
             }
 
-            return DTOUtils.UtilisateurToDTO(utilisateur, ingredients);
+            return Unauthorized();
         }
 
         // PUT: api/Utilisateur/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur)
+        public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur, string token)
         {
-            if (id != utilisateur.IdUtilisateur)
-            {
-                return BadRequest();
-            }
 
-            _context.Entry(utilisateur).State = EntityState.Modified;
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, id);
 
-            try
+            if (isValidToken)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UtilisateurExists(id))
+                if (id != utilisateur.IdUtilisateur)
                 {
-                    return NotFound();
+                    return BadRequest();
                 }
-                else
+
+                _context.Entry(utilisateur).State = EntityState.Modified;
+
+                try
                 {
-                    throw;
+                    await _context.SaveChangesAsync();
                 }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!UtilisateurExists(id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return NoContent();
             }
 
-            return NoContent();
+            return Unauthorized();
         }
 
         // POST: api/Utilisateur
@@ -87,39 +109,30 @@ namespace What2EatAPI.Controllers
 
         // DELETE: api/Utilisateur/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUtilisateur(int id)
+        public async Task<IActionResult> DeleteUtilisateur(int id, string token)
         {
-            var utilisateur = await _context.Utilisateurs.FindAsync(id);
-            if (utilisateur == null)
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, id);
+
+            if (isValidToken)
             {
-                return NotFound();
+                var utilisateur = await _context.Utilisateurs.FindAsync(id);
+                if (utilisateur == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Utilisateurs.Remove(utilisateur);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
 
-            _context.Utilisateurs.Remove(utilisateur);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Unauthorized();
         }
 
         private bool UtilisateurExists(int id)
         {
             return _context.Utilisateurs.Any(e => e.IdUtilisateur == id);
-        }
-
-        [HttpGet("verifyJWT")]
-        public async Task<Boolean> verifyJWT(string token)
-        {
-            var users = await _context.Utilisateurs.ToListAsync();
-
-            foreach (Utilisateur user in users)
-            {
-                if (token.Equals(user.Token))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         //api/Utilisateur/login
@@ -130,7 +143,6 @@ namespace What2EatAPI.Controllers
 
             foreach (Utilisateur user in users)
             {
-                Console.Write(user);
                 if (user.Mail.Equals(email) && user.MotDePasse.Equals(pass))
                 {
                     // génération d'un nouveau token, sauvegarde en base et retour de l'user
@@ -138,7 +150,7 @@ namespace What2EatAPI.Controllers
                     _context.Entry(user).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
 
-                    return DTOUtils.UtilisateurToDTO(user, GetIngredientsFromUserAsync(user.IdUtilisateur).Result);
+                    return Ok(new { token = user.Token });
                 }
             }
             return NotFound();
@@ -146,22 +158,31 @@ namespace What2EatAPI.Controllers
 
         //api/Utilisateur/ingredients
         [HttpGet("frigo")]
-        public async Task<List<IngredientDTO>> GetIngredientsFromUserAsync(int userId)
+        public async Task<ActionResult<List<IngredientDTO>>> GetIngredientsFromUserAsync(int userId, string token)
         {
-            var utilisateur = await _context.Utilisateurs.FindAsync(userId);
-            var frigos = await _context.Frigos.ToListAsync();
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
 
-            List<IngredientDTO> ingredients = new List<IngredientDTO>();
-
-            foreach (var frigo in frigos)
+            if (isValidToken)
             {
-                if (userId.Equals(frigo.UtilisateurIdUtilisateur))
+                var frigos = await _context.Frigos.ToListAsync();
+
+                List<IngredientDTO> ingredients = new List<IngredientDTO>();
+
+                foreach (var frigo in frigos)
                 {
-                    var ingredient = _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
-                    ingredients.Add(DTOUtils.IngredientToDTO(ingredient.Result));
+                    if (userId.Equals(frigo.UtilisateurIdUtilisateur))
+                    {
+                        var ingredient = _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
+                        ingredients.Add(DTOUtils.IngredientToDTO(ingredient.Result));
+                    }
                 }
+                return Ok(ingredients);
+
             }
-            return ingredients;
+            else
+            {
+                return Unauthorized();
+            }
         }
 
     }

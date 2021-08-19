@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 #nullable disable
 
@@ -14,6 +16,8 @@ namespace What2EatAPI
             ListCourses = new HashSet<ListCourse>();
         }
 
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int IdIngredient { get; set; }
         public string Nom { get; set; }
         public string CodeBarre { get; set; }

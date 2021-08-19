@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using What2EatAPI;
+using What2EatAPI.Models.DTO;
+using What2EatAPI.Utils;
 
 namespace What2EatAPI.Controllers
 {
@@ -14,89 +14,128 @@ namespace What2EatAPI.Controllers
     public class IngredientController : ControllerBase
     {
         private readonly what2eatContext _context;
+        private DTOToModel DTOUtils;
 
         public IngredientController(what2eatContext context)
         {
             _context = context;
+            DTOUtils = new DTOToModel(context);
         }
 
         // GET: api/Ingredient
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ingredient>>> GetIngredients()
+        public async Task<ActionResult<IEnumerable<Ingredient>>> GetIngredients(int userId, string token)
         {
-            return await _context.Ingredients.ToListAsync();
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
+
+            if (isValidToken)
+            {
+                return await _context.Ingredients.ToListAsync();
+            }
+            return Unauthorized();
         }
 
         // GET: api/Ingredient/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Ingredient>> GetIngredient(int id)
+        public async Task<ActionResult<Ingredient>> GetIngredient(int id, int userId, string token)
         {
-            var ingredient = await _context.Ingredients.FindAsync(id);
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
 
-            if (ingredient == null)
+            if (isValidToken)
             {
-                return NotFound();
+                var ingredient = await _context.Ingredients.FindAsync(id);
+
+                if (ingredient == null)
+                {
+                    return NotFound();
+                }
+
+                return ingredient;
             }
 
-            return ingredient;
+            return Unauthorized();
         }
 
         // PUT: api/Ingredient/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutIngredient(int id, Ingredient ingredient)
+        public async Task<IActionResult> PutIngredient(int id, Ingredient ingredient, int userId, string token)
         {
-            if (id != ingredient.IdIngredient)
-            {
-                return BadRequest();
-            }
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
 
-            _context.Entry(ingredient).State = EntityState.Modified;
-
-            try
+            if (isValidToken)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!IngredientExists(id))
+                if (id != ingredient.IdIngredient)
                 {
-                    return NotFound();
+                    return BadRequest();
                 }
-                else
+
+                _context.Entry(ingredient).State = EntityState.Modified;
+
+                try
                 {
-                    throw;
+                    await _context.SaveChangesAsync();
                 }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!IngredientExists(id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return NoContent();
             }
 
-            return NoContent();
+            return Unauthorized();
         }
 
         // POST: api/Ingredient
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Ingredient>> PostIngredient(Ingredient ingredient)
+        public async Task<ActionResult<Ingredient>> PostIngredient(IngredientDTO ingredientDTO, string token, int idUser)
         {
-            _context.Ingredients.Add(ingredient);
-            await _context.SaveChangesAsync();
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, idUser);
 
-            return CreatedAtAction("GetIngredient", new { id = ingredient.IdIngredient }, ingredient);
+            if (isValidToken)
+            {
+                var ingredient = DTOUtils.DTOToIngredient(ingredientDTO);
+
+                _context.Ingredients.Add(ingredient);
+
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction("GetIngredient", new { id = ingredient.IdIngredient }, ingredientDTO);
+            }
+
+            return Unauthorized();
         }
 
         // DELETE: api/Ingredient/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteIngredient(int id)
+        public async Task<IActionResult> DeleteIngredient(int id, int userId, string token)
         {
-            var ingredient = await _context.Ingredients.FindAsync(id);
-            if (ingredient == null)
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
+
+            if (isValidToken)
             {
-                return NotFound();
+                var ingredient = await _context.Ingredients.FindAsync(id);
+                if (ingredient == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Ingredients.Remove(ingredient);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
 
-            _context.Ingredients.Remove(ingredient);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Unauthorized();
         }
 
         private bool IngredientExists(int id)

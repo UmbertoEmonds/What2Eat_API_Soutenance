@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 namespace What2EatAPI.Utils
 {
@@ -21,6 +22,21 @@ namespace What2EatAPI.Utils
               signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        
+        public async static Task<Boolean> VerifyJWT(string token, what2eatContext _context, int idUtilisateur)
+        {
+            var utilisateur = await _context.Utilisateurs.FindAsync(idUtilisateur);
+
+            if (utilisateur != null)
+            {
+                if (utilisateur.Token != null && token.Equals(utilisateur.Token))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
     }

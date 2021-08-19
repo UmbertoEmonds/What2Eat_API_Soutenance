@@ -4,38 +4,59 @@ using What2EatAPI.Models.DTO;
 
 namespace What2EatAPI.Utils
 {
-    public class ModelToDTO
+    public class DTOToModel
     {
         private readonly what2eatContext _context;
 
-        public ModelToDTO(what2eatContext context)
+        public DTOToModel(what2eatContext context)
         {
             _context = context;
         }
 
-        public UtilisateurDTO UtilisateurToDTO(Utilisateur utilisateur, List<IngredientDTO> userIngredients) =>
-            new UtilisateurDTO
+        public Ingredient DTOToIngredient(IngredientDTO ingredientDTO)
+        {
+            // création d'une image en bdd à partir de l'image url
+            var image = new Image
             {
-                IdUtilisateur = utilisateur.IdUtilisateur,
-                Nom = utilisateur.Nom,
-                Prenom = utilisateur.Prenom,
-                Naissance = utilisateur.Naissance,
-                Mail = utilisateur.Mail,
-                ImageUrl = _context.Images.FindAsync(utilisateur.ImageIdImage).Result.ImagePath,
-                Token = utilisateur.Token,
-                Ingredients = userIngredients
+                ImagePath = ingredientDTO.ImageUrl
             };
 
-        public IngredientDTO IngredientToDTO(Ingredient ingredient) =>
-            new IngredientDTO
+            _context.Images.Add(image);
+            _context.SaveChanges();
+
+            var ingredient = new Ingredient
             {
-                IdIngredient = ingredient.IdIngredient,
-                Nom = ingredient.Nom,
-                CodeBarre = ingredient.CodeBarre,
-                Quantite = ingredient.Quantite,
-                Unite = ingredient.Unite,
-                ImageUrl = _context.Images.FindAsync(ingredient.ImageIdImage).Result.ImagePath,
-                Categorie = _context.Categories.FindAsync(ingredient.CategorieIdCategorie).Result.Nom
+                Nom = ingredientDTO.Nom,
+                CodeBarre = ingredientDTO.CodeBarre,
+                Quantite = ingredientDTO.Quantite,
+                Unite = ingredientDTO.Unite,
+
+                ImageIdImage = image.IdImage, //on récupère ensuite l'id de l'image créee (clé etrangère)
+                CategorieIdCategorie = ingredientDTO.Categorie
             };
+
+            return ingredient;
+        }
+
+        public Recette DTOToRecette(RecetteDTO recetteDTO)
+        {
+            var image = new Image
+            {
+                ImagePath = recetteDTO.ImageUrl
+            };
+
+            _context.Images.Add(image);
+            _context.SaveChanges();
+
+            var recette = new Recette
+            {
+                Nom = recetteDTO.Nom,
+                ImageIdImage = image.IdImage,
+                Temps = recetteDTO.Temps,
+                Personne = recetteDTO.Personne
+            };
+
+            return recette;
+        }
     }
 }
