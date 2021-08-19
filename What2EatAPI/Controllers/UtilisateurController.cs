@@ -150,7 +150,9 @@ namespace What2EatAPI.Controllers
                     _context.Entry(user).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
 
-                    return Ok(new { token = user.Token });
+                    List<IngredientDTO> ingredients = GetIngredientsFromUserAsync(user.IdUtilisateur, user.Token).Result.Value;
+
+                    return DTOUtils.UtilisateurToDTO(user, ingredients);
                 }
             }
             return NotFound();
