@@ -157,6 +157,7 @@ namespace What2EatAPI.Controllers
             return NotFound();
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet("ingredientsUser")]
         public async Task<List<IngredientDTO>> GetIngredients(int userId)
         {
@@ -193,6 +194,14 @@ namespace What2EatAPI.Controllers
             {
                 return Unauthorized();
             }
+        }
+
+        [HttpPost("verifyToken")]
+        public async Task<Boolean> VerifyToken(string token, int userId)
+        {
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
+
+            return isValidToken;
         }
 
     }
