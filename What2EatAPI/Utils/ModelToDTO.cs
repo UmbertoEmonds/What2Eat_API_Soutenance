@@ -38,6 +38,7 @@ namespace What2EatAPI.Utils
 
             return new IngredientDTO
             {
+                IdIngredient = ingredient.IdIngredient,
                 Nom = ingredient.Nom,
                 CodeBarre = ingredient.CodeBarre,
                 Quantite = ingredient.Quantite,

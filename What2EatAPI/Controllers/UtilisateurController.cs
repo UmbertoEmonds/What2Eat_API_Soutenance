@@ -25,7 +25,7 @@ namespace What2EatAPI.Controllers
             DTOUtils = new ModelToDTO(_context);
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
+      
         // GET: api/User
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Utilisateur>>> GetUsers()
