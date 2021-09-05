@@ -15,13 +15,16 @@ namespace What2EatAPI.Controllers
     {
         private readonly what2eatContext _context;
         private DTOToModel DTOUtils;
+        private ModelToDTO ModelUtils;
 
         public IngredientController(what2eatContext context)
         {
             _context = context;
             DTOUtils = new DTOToModel(context);
+            ModelUtils = new ModelToDTO(context);
         }
 
+        /*
         // GET: api/Ingredient
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Ingredient>>> GetIngredients(int userId, string token)
@@ -34,6 +37,29 @@ namespace What2EatAPI.Controllers
             }
             return Unauthorized();
         }
+        */
+
+        [HttpGet]
+        public async Task<ActionResult<IngredientDTO>> GetIngredient(string barcode, string token, int userId)
+        {
+            Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, userId);
+            if (isValidToken)
+            {
+                List<Ingredient> ingredients = await _context.Ingredients.ToListAsync();
+
+                foreach(var ingredient in ingredients)
+                {
+                    if (ingredient.CodeBarre.Equals(barcode))
+                    {
+                        return await ModelUtils.IngredientToDTOAsync(ingredient);
+                    }
+                }
+            }else
+            {
+                return Unauthorized();
+            }
+            return NotFound();
+        }         
 
         // GET: api/Ingredient/5
         [HttpGet("{id}")]
