@@ -403,3 +403,6 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+
+# partie Azure
+What2EatAPI/appsettings.Development
