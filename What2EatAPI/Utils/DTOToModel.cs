@@ -21,7 +21,14 @@ namespace What2EatAPI.Utils
                 ImagePath = ingredientDTO.ImageUrl
             };
 
+            var categorie = new Categorie
+            {
+                Nom = ingredientDTO.Categorie
+            };
+
             _context.Images.Add(image);
+            _context.Categories.Add(categorie);
+
             _context.SaveChanges();
 
             var ingredient = new Ingredient
@@ -32,7 +39,7 @@ namespace What2EatAPI.Utils
                 Unite = ingredientDTO.Unite,
 
                 ImageIdImage = image.IdImage, //on récupère ensuite l'id de l'image créee (clé etrangère)
-                CategorieIdCategorie = ingredientDTO.Categorie
+                CategorieIdCategorie = categorie.IdCategorie
             };
 
             return ingredient;

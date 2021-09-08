@@ -44,7 +44,7 @@ namespace What2EatAPI.Utils
                 Quantite = ingredient.Quantite,
                 Unite = ingredient.Unite,
                 ImageUrl = image.ImagePath,
-                Categorie = categorie.IdCategorie
+                Categorie = categorie.Nom
             };
         }
     }

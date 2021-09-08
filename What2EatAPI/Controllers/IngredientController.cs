@@ -131,8 +131,21 @@ namespace What2EatAPI.Controllers
             {
                 var ingredient = DTOUtils.DTOToIngredient(ingredientDTO);
 
-                _context.Ingredients.Add(ingredient);
+                if(ingredient.Quantite == null)
+                {
+                    ingredient.Quantite = "0";
+                }
 
+                _context.Ingredients.Add(ingredient);
+                await _context.SaveChangesAsync();
+
+                var frigo = new Frigo
+                {
+                    UtilisateurIdUtilisateur = idUser,
+                    IngredientIdIngredient = ingredient.IdIngredient
+                };
+
+                _context.Frigos.Add(frigo);
                 await _context.SaveChangesAsync();
 
                 return CreatedAtAction("GetIngredient", new { id = ingredient.IdIngredient }, ingredientDTO);

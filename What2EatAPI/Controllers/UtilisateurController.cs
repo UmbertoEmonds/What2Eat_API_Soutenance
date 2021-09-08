@@ -25,13 +25,15 @@ namespace What2EatAPI.Controllers
             DTOUtils = new ModelToDTO(_context);
         }
 
-      
+
+        /*
         // GET: api/User
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Utilisateur>>> GetUsers()
         {
             return await _context.Utilisateurs.ToListAsync();
         }
+        */
 
         // GET: api/Utilisateur/5
         [HttpGet("{id}")]
@@ -139,22 +141,36 @@ namespace What2EatAPI.Controllers
         public async Task<ActionResult<UtilisateurDTO>> Login(string email, string pass)
         {
             var users = await _context.Utilisateurs.ToListAsync();
+            var isLogged = false;
+            var userLogged = new Utilisateur();
 
             foreach (Utilisateur user in users)
             {
                 if (user.Mail.Equals(email) && user.MotDePasse.Equals(pass))
                 {
-                    // génération d'un nouveau token, sauvegarde en base et retour de l'user
-                    user.Token = TokenUtils.GenerateJWT(_config);
-                    _context.Entry(user).State = EntityState.Modified;
-                    await _context.SaveChangesAsync();
-
-                    List<IngredientDTO> ingredients = await GetIngredients(user.IdUtilisateur);
-
-                    return await DTOUtils.UtilisateurToDTO(user, ingredients);
+                    userLogged = user;
+                    isLogged = true;
+                    break;
                 }
             }
-            return NotFound();
+
+            if(isLogged)
+            {
+                if(userLogged.Token == null)
+                {
+                    // génération d'un nouveau token, sauvegarde en base et retour de l'user
+                    userLogged.Token = TokenUtils.GenerateJWT(_config);
+                    _context.Entry(userLogged).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+                }
+
+                List<IngredientDTO> ingredients = await GetIngredients(userLogged.IdUtilisateur);
+
+                return await DTOUtils.UtilisateurToDTO(userLogged, ingredients);
+            }else
+            {
+                return NotFound();
+            }
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
