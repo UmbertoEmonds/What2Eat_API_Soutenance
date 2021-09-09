@@ -21,7 +21,8 @@ namespace What2EatAPI
         public int IdIngredient { get; set; }
         public string Nom { get; set; }
         public string CodeBarre { get; set; }
-        public string Quantite { get; set; }
+        public int? Quantite { get; set; }
+        public String Contenant { get; set; }
         public string Unite { get; set; }
         public int? ImageIdImage { get; set; }
         public int? CategorieIdCategorie { get; set; }

@@ -206,8 +206,12 @@ namespace What2EatAPI
                     .HasColumnName("nom");
 
                 entity.Property(e => e.Quantite)
-                    .HasColumnType("varchar(255)")
+                    .HasColumnType("int(11)")
                     .HasColumnName("quantite");
+
+                entity.Property(e => e.Contenant)
+                    .HasMaxLength(25)
+                    .HasColumnName("contenant");
 
                 entity.Property(e => e.Unite)
                     .HasMaxLength(255)

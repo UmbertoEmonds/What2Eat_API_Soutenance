@@ -130,22 +130,38 @@ namespace What2EatAPI.Controllers
             if (isValidToken)
             {
                 var ingredient = DTOUtils.DTOToIngredient(ingredientDTO);
+                var ingredients = await _context.Ingredients.ToListAsync();
+                Ingredient ingredientExists = null;
 
-                if(ingredient.Quantite == null)
+                foreach (Ingredient i in ingredients)
                 {
-                    ingredient.Quantite = "0";
+                    // ingredient déjà existant
+                    if (ingredientDTO.CodeBarre.Equals(i.CodeBarre))
+                    {
+                        ingredientExists = i;
+                    }
                 }
 
-                _context.Ingredients.Add(ingredient);
-                await _context.SaveChangesAsync();
-
-                var frigo = new Frigo
+                if (ingredientExists != null)
                 {
-                    UtilisateurIdUtilisateur = idUser,
-                    IngredientIdIngredient = ingredient.IdIngredient
-                };
+                    ingredientExists.Quantite = ingredientExists.Quantite += 1;
 
-                _context.Frigos.Add(frigo);
+                    _context.Entry(ingredientExists).State = EntityState.Modified;
+                }
+                else
+                {
+                    _context.Ingredients.Add(ingredient);
+                    await _context.SaveChangesAsync();
+
+                    var frigo = new Frigo
+                    {
+                        UtilisateurIdUtilisateur = idUser,
+                        IngredientIdIngredient = ingredient.IdIngredient
+                    };
+
+                    _context.Frigos.Add(frigo);
+                }
+
                 await _context.SaveChangesAsync();
 
                 return CreatedAtAction("GetIngredient", new { id = ingredient.IdIngredient }, ingredientDTO);
