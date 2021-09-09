@@ -158,7 +158,7 @@ namespace What2EatAPI.Controllers
 
             if(isLogged)
             {
-                if(userLogged.Token == null)
+                if(userLogged.Token.Equals("NULL"))
                 {
                     // génération d'un nouveau token, sauvegarde en base et retour de l'user
                     userLogged.Token = TokenUtils.GenerateJWT(_config);
