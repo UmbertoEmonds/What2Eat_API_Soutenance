@@ -61,7 +61,7 @@ namespace What2EatAPI.Controllers
         // PUT: api/Utilisateur/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur, string token)
+        public async Task<IActionResult> PutUtilisateur(int id, UtilisateurDTO utilisateur, string token)
         {
 
             Boolean isValidToken = await TokenUtils.VerifyJWT(token, _context, id);
@@ -96,6 +96,8 @@ namespace What2EatAPI.Controllers
 
             return Unauthorized();
         }
+
+        
 
         // POST: api/Utilisateur
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
