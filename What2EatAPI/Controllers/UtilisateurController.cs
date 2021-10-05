@@ -173,8 +173,8 @@ namespace What2EatAPI.Controllers
             List<IngredientDTO> ingredients = new List<IngredientDTO>();
 
             var ingredientsData = _context.Utilisateurs.Join(
-
                 _context.Frigos,
+
                 user => user.IdUtilisateur,
                 frigo => frigo.UtilisateurIdUtilisateur,
                 (user, frigo) => new
@@ -183,13 +183,13 @@ namespace What2EatAPI.Controllers
                     frigo.IngredientIdIngredient
 
                 }).Join(
-
                 _context.Ingredients,
-                frigo => frigo.IngredientIdIngredient,
+
+                firstJoinResult => firstJoinResult.IngredientIdIngredient,
                 ingredient => ingredient.IdIngredient,
-                (frigo, ingredient) => new
+                (firstJoinResult, ingredient) => new
                 {
-                    frigo.IdUtilisateur,
+                    firstJoinResult.IdUtilisateur,
                     ingredient.IdIngredient,
                     ingredient.Nom,
                     ingredient.CodeBarre,
@@ -199,7 +199,7 @@ namespace What2EatAPI.Controllers
                     ingredient.ImageIdImage,
                     ingredient.CategorieIdCategorie
 
-                }).Where(result => result.IdUtilisateur == userId).ToList();
+                }).Where(secondJoinResult => secondJoinResult.IdUtilisateur == userId).ToList();
 
             foreach (var ingredientData in ingredientsData)
             {
@@ -210,7 +210,9 @@ namespace What2EatAPI.Controllers
                     CodeBarre = ingredientData.CodeBarre,
                     Quantite = ingredientData.Quantite,
                     contenant = ingredientData.Contenant,
-                    Unite = ingredientData.Unite
+                    Unite = ingredientData.Unite,
+                    ImageUrl = _context.Images.Find(ingredientData.ImageIdImage).ImagePath,
+                    Categorie = _context.Categories.Find(ingredientData.CategorieIdCategorie).Nom
                 };
 
                 ingredients.Add(ingredientDTO);
