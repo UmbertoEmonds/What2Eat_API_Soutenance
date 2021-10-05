@@ -45,7 +45,7 @@ namespace What2EatAPI.Controllers
             {
                 var utilisateur = await _context.Utilisateurs.FindAsync(id);
 
-                List<IngredientDTO> ingredients = await GetIngredients(id);
+                List<IngredientDTO> ingredients = GetIngredients(id);
 
                 if (utilisateur == null)
                 {
@@ -142,23 +142,13 @@ namespace What2EatAPI.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UtilisateurDTO>> Login(string email, string pass)
         {
-            var users = await _context.Utilisateurs.ToListAsync();
-            var isLogged = false;
-            var userLogged = new Utilisateur();
+            var userQuery = _context.Utilisateurs.Where(user => user.Mail == email && user.MotDePasse == pass);
 
-            foreach (Utilisateur user in users)
+            if(userQuery.Any())
             {
-                if (user.Mail.Equals(email) && user.MotDePasse.Equals(pass))
-                {
-                    userLogged = user;
-                    isLogged = true;
-                    break;
-                }
-            }
+                var userLogged = userQuery.First();
 
-            if(isLogged)
-            {
-                if(userLogged.Token == null || userLogged.Token.Equals("NULL"))
+                if (userLogged.Token == null)
                 {
                     // génération d'un nouveau token, sauvegarde en base et retour de l'user
                     userLogged.Token = TokenUtils.GenerateJWT(_config);
@@ -166,7 +156,7 @@ namespace What2EatAPI.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                List<IngredientDTO> ingredients = await GetIngredients(userLogged.IdUtilisateur);
+                List<IngredientDTO> ingredients = GetIngredients(userLogged.IdUtilisateur);
 
                 return await DTOUtils.UtilisateurToDTO(userLogged, ingredients);
             }else
@@ -177,24 +167,58 @@ namespace What2EatAPI.Controllers
 
         [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet("ingredientsUser")]
-        public async Task<List<IngredientDTO>> GetIngredients(int userId)
+        public List<IngredientDTO> GetIngredients(int userId)
         {
-            var frigos = await _context.Frigos.ToListAsync();
 
             List<IngredientDTO> ingredients = new List<IngredientDTO>();
 
-            foreach (var frigo in frigos)
-            {
-                if (userId.Equals(frigo.UtilisateurIdUtilisateur))
+            var ingredientsData = _context.Utilisateurs.Join(
+
+                _context.Frigos,
+                user => user.IdUtilisateur,
+                frigo => frigo.UtilisateurIdUtilisateur,
+                (user, frigo) => new
                 {
-                    var ingredient = await _context.Ingredients.FindAsync(frigo.IngredientIdIngredient);
-                    var ingredientDTO = await DTOUtils.IngredientToDTOAsync(ingredient);
-                    ingredients.Add(ingredientDTO);
-                }
+                    user.IdUtilisateur,
+                    frigo.IngredientIdIngredient
+
+                }).Join(
+
+                _context.Ingredients,
+                frigo => frigo.IngredientIdIngredient,
+                ingredient => ingredient.IdIngredient,
+                (frigo, ingredient) => new
+                {
+                    frigo.IdUtilisateur,
+                    ingredient.IdIngredient,
+                    ingredient.Nom,
+                    ingredient.CodeBarre,
+                    ingredient.Quantite,
+                    ingredient.Contenant,
+                    ingredient.Unite,
+                    ingredient.ImageIdImage,
+                    ingredient.CategorieIdCategorie
+
+                }).Where(result => result.IdUtilisateur == userId).ToList();
+
+            foreach (var ingredientData in ingredientsData)
+            {
+                var ingredientDTO = new IngredientDTO
+                {
+                    IdIngredient = ingredientData.IdIngredient,
+                    Nom = ingredientData.Nom,
+                    CodeBarre = ingredientData.CodeBarre,
+                    Quantite = ingredientData.Quantite,
+                    contenant = ingredientData.Contenant,
+                    Unite = ingredientData.Unite
+                };
+
+                ingredients.Add(ingredientDTO);
             }
+
             return ingredients;
         }
-         
+
         //api/Utilisateur/ingredients
         [HttpGet("frigo")]
         public async Task<ActionResult<List<IngredientDTO>>> GetIngredientsFromUserAsync(int userId, string token)
@@ -203,7 +227,7 @@ namespace What2EatAPI.Controllers
 
             if (isValidToken)
             {
-                List<IngredientDTO> ingredients = await GetIngredients(userId);
+                List<IngredientDTO> ingredients = GetIngredients(userId);
 
                 return Ok(ingredients);
 
